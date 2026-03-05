@@ -1,0 +1,7 @@
+[build]
+  functions = "netlify/functions"
+  command = "echo 'Building...'"
+
+[functions]
+  external_node_modules = ["express", "sqlite3", "body-parser"]
+  node_bundler = "esbuild"
