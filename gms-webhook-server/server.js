@@ -81,7 +81,34 @@ app.get('/', (req, res) => {
                 .header h1 { margin: 0; }
                 .btn { display: inline-block; background: #667eea; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px; }
                 .btn:hover { background: #5a67d8; }
+                .copy-btn { 
+                    background: #28a745; 
+                    color: white; 
+                    border: none; 
+                    padding: 8px 16px; 
+                    border-radius: 4px; 
+                    cursor: pointer; 
+                    margin-left: 10px;
+                    font-size: 14px;
+                }
+                .copy-btn:hover { background: #218838; }
+                .url-container { display: flex; align-items: center; flex-wrap: wrap; }
             </style>
+            <script>
+                function copyCallbackUrl() {
+                    const url = document.getElementById('callbackUrl').innerText;
+                    navigator.clipboard.writeText(url).then(function() {
+                        const btn = document.getElementById('copyBtn');
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        setTimeout(function() {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }).catch(function(err) {
+                        alert('Failed to copy URL: ' + err);
+                    });
+                }
+            </script>
         </head>
         <body>
             <div class="container">
@@ -92,7 +119,12 @@ app.get('/', (req, res) => {
                 
                 <div class="url-box">
                     <h2>Your Callback URL:</h2>
-                    <div class="url">${callbackUrl}</div>
+                    <div class="url-container">
+                        <div class="url" id="callbackUrl">${callbackUrl}</div>
+                        <button id="copyBtn" class="copy-btn" onclick="copyCallbackUrl()">
+                            <i class="fas fa-copy"></i> Copy URL
+                        </button>
+                    </div>
                     <p><small>Use this URL in your GMS application settings for message status callbacks</small></p>
                 </div>
 
