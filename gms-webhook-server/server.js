@@ -64,6 +64,8 @@ app.get('/', (req, res) => {
         <html>
         <head>
             <title>GMS Webhook Server</title>
+            <!-- Optional: Add Font Awesome for icons -->
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
                 .container { max-width: 800px; margin: 0 auto; }
@@ -126,46 +128,79 @@ app.get('/', (req, res) => {
 
 <!-- Status section -->
 
-<h2>System Health</h2>
-<div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+<h2><i class="fas fa-heartbeat" style="color: #ff6b6b; margin-right: 10px;"></i>System Health</h2>
+<div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px;">
     
-    <div style="margin-bottom: 15px;">
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="width: 100px; font-weight: bold;">Server:</span>
-            <span style="color: #4CAF50; margin-right: 10px;">●</span>
-            <span>Running</span>
-            <span style="margin-left: auto; background: #4CAF50; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px;">Active</span>
+    <!-- Server Status Bar -->
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="width: 100px; font-weight: 600; color: #555;">
+                <i class="fas fa-server" style="margin-right: 5px; color: #4CAF50;"></i> Server:
+            </span>
+            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
+            <span style="font-weight: 500;">Running</span>
+            <span style="margin-left: auto; background: #4CAF50; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
+                <i class="fas fa-check-circle" style="margin-right: 5px;"></i>Active
+            </span>
         </div>
-        <div style="height: 8px; background: #e0e0e0; border-radius: 4px;">
-            <div style="height: 8px; width: 100%; background: #4CAF50; border-radius: 4px;"></div>
+        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 5px;"></div>
         </div>
     </div>
     
-    <div style="margin-bottom: 15px;">
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="width: 100px; font-weight: bold;">Database:</span>
-            <span style="color: #4CAF50; margin-right: 10px;">●</span>
-            <span>SQLite Connected</span>
-            <span style="margin-left: auto; background: #2196F3; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px;">Online</span>
+    <!-- Database Status Bar -->
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="width: 100px; font-weight: 600; color: #555;">
+                <i class="fas fa-database" style="margin-right: 5px; color: #2196F3;"></i> Database:
+            </span>
+            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
+            <span style="font-weight: 500;">SQLite Connected</span>
+            <span style="margin-left: auto; background: #2196F3; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
+                <i class="fas fa-plug" style="margin-right: 5px;"></i>Online
+            </span>
         </div>
-        <div style="height: 8px; background: #e0e0e0; border-radius: 4px;">
-            <div style="height: 8px; width: 100%; background: #2196F3; border-radius: 4px;"></div>
+        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #2196F3, #64B5F6); border-radius: 5px;"></div>
         </div>
     </div>
     
-    <div style="display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-        <div>
-            <span style="color: #666;">Current Time</span><br>
-            <span style="font-size: 18px; font-weight: bold;">${new Date().toLocaleString()}</span>
+    <!-- Statistics Row -->
+    <div style="display: flex; justify-content: space-between; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0;">
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-clock" style="font-size: 24px; color: #ff9800; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Current Time</div>
+                <div style="font-size: 18px; font-weight: bold; color: #333; margin-top: 5px;">${new Date().toLocaleTimeString()}</div>
+                <div style="font-size: 14px; color: #666;">${new Date().toLocaleDateString()}</div>
+            </div>
         </div>
-        <div>
-            <span style="color: #666;">Uptime</span><br>
-            <span style="font-size: 18px; font-weight: bold;">${Math.floor(process.uptime() / 60)} min</span>
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-chart-line" style="font-size: 24px; color: #9c27b0; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Uptime</div>
+                <div style="font-size: 22px; font-weight: bold; color: #9c27b0; margin-top: 5px;">${Math.floor(process.uptime() / 60)} <span style="font-size: 14px;">min</span></div>
+                <div style="font-size: 13px; color: #666;">${Math.floor(process.uptime())} seconds</div>
+            </div>
         </div>
-        <div>
-            <span style="color: #666;">Status</span><br>
-            <span style="color: #4CAF50; font-weight: bold;">● Healthy</span>
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-check-circle" style="font-size: 24px; color: #4CAF50; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4CAF50; margin-top: 8px;">
+                    <span style="color: #4CAF50;">●</span> Healthy
+                </div>
+                <div style="font-size: 13px; color: #666;">All Systems Go</div>
+            </div>
         </div>
+    </div>
+    
+    <!-- Optional: Small footer note -->
+    <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #999;">
+        <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Auto-refresh every 30s
     </div>
 </div>
             </div>
