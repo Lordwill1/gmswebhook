@@ -330,7 +330,7 @@ app.get('/view-events', (req, res) => {
     });
 });
 
-// View messages in browser (HTML format) - UPDATED to show sent status
+// View messages in browser (HTML format)
 app.get('/view-messages', (req, res) => {
     const limit = req.query.limit || 20;
     
@@ -352,7 +352,6 @@ app.get('/view-messages', (req, res) => {
                     th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
                     tr:nth-child(even) { background-color: #f2f2f2; }
                     .delivered { color: green; font-weight: bold; }
-                    .sent { color: blue; font-weight: bold; }
                     .failed { color: red; font-weight: bold; }
                     .pending { color: orange; font-weight: bold; }
                     .nav { margin: 20px 0; }
@@ -385,16 +384,8 @@ app.get('/view-messages', (req, res) => {
             html += `<tr><td colspan="8" style="text-align: center;">No messages yet.</td></tr>`;
         } else {
             rows.forEach(row => {
-                let statusClass = '';
-                if (row.status === 'delivered') {
-                    statusClass = 'delivered';
-                } else if (row.status === 'sent') {
-                    statusClass = 'sent';
-                } else if (row.status === 'failed') {
-                    statusClass = 'failed';
-                } else {
-                    statusClass = 'pending';
-                }
+                const statusClass = row.status === 'delivered' ? 'delivered' : 
+                                   row.status === 'failed' ? 'failed' : 'pending';
                 
                 html += `
                     <tr>
@@ -492,7 +483,6 @@ app.get('/test-webhook', (req, res) => {
                         <select id="eventType">
                             <option value="message.status">Message Status</option>
                             <option value="message.inbound">Inbound Message</option>
-                            <option value="message.sent">Message Sent</option>
                             <option value="message.delivered">Message Delivered</option>
                             <option value="message.failed">Message Failed</option>
                         </select>
@@ -730,13 +720,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
-                `, ['sent', messageId], function(err) {
-                    if (err) {
-                        console.error('Error updating message log:', err);
-                    } else {
-                        console.log('Message status updated to sent:', messageId);
-                    }
-                });
+                `, ['sent', messageId]);
             }
         }
     });
@@ -793,7 +777,7 @@ app.get('/messages/:messageId', (req, res) => {
     });
 });
 
-// Get statistics - UPDATED to include sent messages
+// Get statistics
 app.get('/stats', (req, res) => {
     const stats = {};
     
@@ -813,7 +797,6 @@ app.get('/stats', (req, res) => {
             SELECT 
                 COUNT(*) as totalMessages,
                 SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as deliveredMessages,
-                SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sentMessages,
                 SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failedMessages,
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingMessages,
                 SUM(CASE WHEN direction = 'inbound' THEN 1 ELSE 0 END) as inboundMessages,
@@ -823,7 +806,6 @@ app.get('/stats', (req, res) => {
             stats.messageStats = row || {
                 totalMessages: 0,
                 deliveredMessages: 0,
-                sentMessages: 0,
                 failedMessages: 0,
                 pendingMessages: 0,
                 inboundMessages: 0,
@@ -875,10 +857,10 @@ app.listen(PORT, () => {
     console.log(`\nManagement endpoints:`);
     console.log(`   GET  http://localhost:${PORT}/ - Home page`);
     console.log(`   GET  http://localhost:${PORT}/view-events - View events in browser`);
-    console.log(`   GET  http://localhost:${PORT}/view-messages - View messages in browser (shows sent, delivered, failed, pending)`);
+    console.log(`   GET  http://localhost:${PORT}/view-messages - View messages in browser`);
     console.log(`   GET  http://localhost:${PORT}/events - View webhook events (JSON)`);
     console.log(`   GET  http://localhost:${PORT}/messages - View message logs (JSON)`);
-    console.log(`   GET  http://localhost:${PORT}/stats - View statistics (includes sent counts)`);
+    console.log(`   GET  http://localhost:${PORT}/stats - View statistics`);
     console.log(`   GET  http://localhost:${PORT}/callback-url - Get callback URL`);
     console.log(`   GET  http://localhost:${PORT}/test-webhook - Test page`);
     console.log(`   GET  http://localhost:${PORT}/health - Health check`);
