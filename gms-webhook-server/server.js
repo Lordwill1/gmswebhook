@@ -77,13 +77,15 @@ app.get('/', (req, res) => {
                 .nav a { margin-right: 15px; }
                 .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
                 .header h1 { margin: 0; }
+                .btn { display: inline-block; background: #667eea; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px; }
+                .btn:hover { background: #5a67d8; }
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
                     <h1>GMS Webhook Server</h1>
-                    <p>Global Message Services Integration</p>
+                    <p>Global Message Services Integration [Fabletics]</p>
                 </div>
                 
                 <div class="url-box">
@@ -93,21 +95,26 @@ app.get('/', (req, res) => {
                 </div>
 
                 <div class="nav">
-                    <a href="/events">View Events</a> | 
-                    <a href="/messages">View Messages</a> | 
-                    <a href="/stats">Statistics</a> | 
-                    <a href="/test-webhook">Test Webhook</a>
+                    <a href="/view-events" class="btn">View Events</a>
+                    <a href="/view-messages" class="btn">View Messages</a>
+                    <a href="/stats" class="btn">Statistics</a>
+                    <a href="/test-webhook" class="btn">Test Webhook</a>
+                    <a href="/health" class="btn">Health Check</a>
                 </div>
 
                 <h2>Available Endpoints:</h2>
                 <ul>
                     <li><code>GET /</code> - This page</li>
                     <li><code>POST /webhook</code> - Main webhook endpoint for GMS</li>
-                    <li><code>GET /events</code> - View all webhook events</li>
-                    <li><code>GET /messages</code> - View message logs</li>
+                    <li><code>GET /events</code> - View all webhook events (JSON)</li>
+                    <li><code>GET /view-events</code> - View events in browser (HTML)</li>
+                    <li><code>GET /messages</code> - View message logs (JSON)</li>
+                    <li><code>GET /view-messages</code> - View messages in browser (HTML)</li>
+                    <li><code>GET /messages/:id</code> - Get specific message</li>
                     <li><code>GET /stats</code> - View statistics</li>
                     <li><code>GET /callback-url</code> - Get callback URL in JSON format</li>
                     <li><code>GET /test-webhook</code> - Test page for sending sample webhooks</li>
+                    <li><code>GET /health</code> - Health check endpoint</li>
                 </ul>
 
                 <h2>GMS Webhook Formats Accepted:</h2>
@@ -117,14 +124,247 @@ app.get('/', (req, res) => {
                     <li><strong>Message Events</strong> - queued, sent, delivered, failed, etc.</li>
                 </ul>
 
-                <h2>Server Status:</h2>
-                <p>✅ Server is running</p>
-                <p>📡 Database: SQLite connected</p>
-                <p>🕒 Current time: ${new Date().toLocaleString()}</p>
+<!-- Status section -->
+
+<h2>System Health</h2>
+<div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    
+    <div style="margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <span style="width: 100px; font-weight: bold;">Server:</span>
+            <span style="color: #4CAF50; margin-right: 10px;">●</span>
+            <span>Running</span>
+            <span style="margin-left: auto; background: #4CAF50; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px;">Active</span>
+        </div>
+        <div style="height: 8px; background: #e0e0e0; border-radius: 4px;">
+            <div style="height: 8px; width: 100%; background: #4CAF50; border-radius: 4px;"></div>
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <span style="width: 100px; font-weight: bold;">Database:</span>
+            <span style="color: #4CAF50; margin-right: 10px;">●</span>
+            <span>SQLite Connected</span>
+            <span style="margin-left: auto; background: #2196F3; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px;">Online</span>
+        </div>
+        <div style="height: 8px; background: #e0e0e0; border-radius: 4px;">
+            <div style="height: 8px; width: 100%; background: #2196F3; border-radius: 4px;"></div>
+        </div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <div>
+            <span style="color: #666;">Current Time</span><br>
+            <span style="font-size: 18px; font-weight: bold;">${new Date().toLocaleString()}</span>
+        </div>
+        <div>
+            <span style="color: #666;">Uptime</span><br>
+            <span style="font-size: 18px; font-weight: bold;">${Math.floor(process.uptime() / 60)} min</span>
+        </div>
+        <div>
+            <span style="color: #666;">Status</span><br>
+            <span style="color: #4CAF50; font-weight: bold;">● Healthy</span>
+        </div>
+    </div>
+</div>
             </div>
         </body>
         </html>
     `);
+});
+
+// View events in browser (HTML format)
+app.get('/view-events', (req, res) => {
+    const limit = req.query.limit || 20;
+    
+    db.all('SELECT * FROM webhook_events ORDER BY received_at DESC LIMIT ?', [limit], (err, rows) => {
+        if (err) {
+            return res.status(500).send('Database error: ' + err.message);
+        }
+        
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Recent Events - GMS Webhook</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; }
+                    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                    tr:nth-child(even) { background-color: #f2f2f2; }
+                    .event-row:hover { background-color: #e0e0e0; cursor: pointer; }
+                    .nav { margin: 20px 0; }
+                    .nav a { margin-right: 15px; color: #667eea; text-decoration: none; }
+                    .nav a:hover { text-decoration: underline; }
+                    .payload { display: none; background: #f9f9f9; padding: 10px; margin: 5px 0; border-left: 3px solid #667eea; font-family: monospace; white-space: pre-wrap; }
+                </style>
+                <script>
+                    function togglePayload(id) {
+                        var element = document.getElementById('payload-' + id);
+                        if (element.style.display === 'none' || element.style.display === '') {
+                            element.style.display = 'block';
+                        } else {
+                            element.style.display = 'none';
+                        }
+                    }
+                </script>
+            </head>
+            <body>
+                <h1>Recent Webhook Events</h1>
+                <div class="nav">
+                    <a href="/">[Back to Home]</a>
+                    <a href="/view-events?limit=50">Show 50</a>
+                    <a href="/view-events?limit=100">Show 100</a>
+                    <a href="/events">View as JSON</a>
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Event Type</th>
+                        <th>Message ID</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Status</th>
+                        <th>Received</th>
+                    </tr>
+        `;
+        
+        if (rows.length === 0) {
+            html += `<tr><td colspan="7" style="text-align: center;">No events yet. Send a test webhook!</td></tr>`;
+        } else {
+            rows.forEach(row => {
+                html += `
+                    <tr class="event-row" onclick="togglePayload(${row.id})">
+                        <td>${row.id}</td>
+                        <td>${row.event_type || '-'}</td>
+                        <td>${row.message_id || '-'}</td>
+                        <td>${row.from_number || '-'}</td>
+                        <td>${row.to_number || '-'}</td>
+                        <td>${row.status || '-'}</td>
+                        <td>${row.received_at}</td>
+                    </tr>
+                    <tr id="payload-${row.id}" class="payload">
+                        <td colspan="7">
+                            <strong>Raw Payload:</strong>
+                            <pre>${JSON.stringify(JSON.parse(row.raw_payload || '{}'), null, 2)}</pre>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += `</table>
+                <p><small>Click on any row to view the full payload</small></p>
+                </body></html>`;
+        res.send(html);
+    });
+});
+
+// View messages in browser (HTML format)
+app.get('/view-messages', (req, res) => {
+    const limit = req.query.limit || 20;
+    
+    db.all('SELECT * FROM message_logs ORDER BY created_at DESC LIMIT ?', [limit], (err, rows) => {
+        if (err) {
+            return res.status(500).send('Database error: ' + err.message);
+        }
+        
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Message Logs - GMS Webhook</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; }
+                    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                    tr:nth-child(even) { background-color: #f2f2f2; }
+                    .delivered { color: green; font-weight: bold; }
+                    .failed { color: red; font-weight: bold; }
+                    .pending { color: orange; font-weight: bold; }
+                    .nav { margin: 20px 0; }
+                    .nav a { margin-right: 15px; color: #667eea; text-decoration: none; }
+                </style>
+            </head>
+            <body>
+                <h1>Message Logs</h1>
+                <div class="nav">
+                    <a href="/">[Back to Home]</a>
+                    <a href="/view-messages?limit=50">Show 50</a>
+                    <a href="/view-messages?limit=100">Show 100</a>
+                    <a href="/messages">View as JSON</a>
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Message ID</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Direction</th>
+                        <th>Content</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+        `;
+        
+        if (rows.length === 0) {
+            html += `<tr><td colspan="8" style="text-align: center;">No messages yet.</td></tr>`;
+        } else {
+            rows.forEach(row => {
+                const statusClass = row.status === 'delivered' ? 'delivered' : 
+                                   row.status === 'failed' ? 'failed' : 'pending';
+                
+                html += `
+                    <tr>
+                        <td>${row.id}</td>
+                        <td>${row.message_id || '-'}</td>
+                        <td>${row.from_number || '-'}</td>
+                        <td>${row.to_number || '-'}</td>
+                        <td>${row.direction || '-'}</td>
+                        <td>${(row.message_content || '').substring(0, 30)}${(row.message_content || '').length > 30 ? '...' : ''}</td>
+                        <td class="${statusClass}">${row.status || '-'}</td>
+                        <td>${row.created_at}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += `</table></body></html>`;
+        res.send(html);
+    });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    db.get('SELECT 1', [], (err) => {
+        if (err) {
+            return res.status(500).json({ 
+                status: 'unhealthy', 
+                database: 'disconnected',
+                error: err.message
+            });
+        }
+        res.json({ 
+            status: 'healthy', 
+            database: 'connected',
+            uptime: process.uptime(),
+            uptime_formatted: Math.floor(process.uptime() / 60) + ' minutes',
+            timestamp: new Date().toISOString(),
+            endpoints: {
+                webhook: '/webhook',
+                events: '/events',
+                messages: '/messages',
+                stats: '/stats'
+            }
+        });
+    });
 });
 
 // Get callback URL in JSON format
@@ -146,18 +386,28 @@ app.get('/test-webhook', (req, res) => {
         <head>
             <title>Test GMS Webhook</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 600px; margin: 0 auto; }
+                body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                h1 { color: #333; margin-top: 0; }
                 .form-group { margin-bottom: 15px; }
-                label { display: block; margin-bottom: 5px; font-weight: bold; }
-                input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-                button { background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-                button:hover { background: #5a67d8; }
-                .result { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; white-space: pre-wrap; }
+                label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+                input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+                input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+                button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+                button:hover { opacity: 0.9; }
+                .result { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; border-left: 4px solid #667eea; }
+                pre { background: #e9ecef; padding: 10px; border-radius: 4px; overflow-x: auto; }
+                .nav { margin-bottom: 20px; }
+                .nav a { color: #667eea; text-decoration: none; }
+                .nav a:hover { text-decoration: underline; }
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="nav">
+                    <a href="/">[Back to Home]</a>
+                </div>
+                
                 <h1>Test GMS Webhook</h1>
                 <p>Send a test webhook to your server</p>
                 
@@ -175,6 +425,7 @@ app.get('/test-webhook', (req, res) => {
                     <div class="form-group">
                         <label>Message ID:</label>
                         <input type="text" id="messageId" value="msg_${Date.now()}" readonly>
+                        <small style="color: #666;">Auto-generated</small>
                     </div>
                     
                     <div class="form-group">
@@ -185,6 +436,14 @@ app.get('/test-webhook', (req, res) => {
                     <div class="form-group">
                         <label>To Number:</label>
                         <input type="text" id="toNumber" value="+0987654321">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Direction:</label>
+                        <select id="direction">
+                            <option value="outbound">Outbound</option>
+                            <option value="inbound">Inbound</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
@@ -199,13 +458,13 @@ app.get('/test-webhook', (req, res) => {
                     
                     <div class="form-group">
                         <label>Message Content:</label>
-                        <textarea id="content" rows="3">Test message from GMS</textarea>
+                        <textarea id="content" rows="3">Test message from GMS webhook tester</textarea>
                     </div>
                     
                     <button type="submit">Send Test Webhook</button>
                 </form>
                 
-                <div id="result" class="result"></div>
+                <div id="result" class="result" style="display: none;"></div>
             </div>
             
             <script>
@@ -217,10 +476,15 @@ app.get('/test-webhook', (req, res) => {
                         messageId: document.getElementById('messageId').value,
                         from: document.getElementById('fromNumber').value,
                         to: document.getElementById('toNumber').value,
+                        direction: document.getElementById('direction').value,
                         status: document.getElementById('status').value,
                         content: document.getElementById('content').value,
                         timestamp: new Date().toISOString()
                     };
+                    
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = '<p>Sending...</p>';
+                    resultDiv.style.display = 'block';
                     
                     try {
                         const response = await fetch('/webhook', {
@@ -230,14 +494,16 @@ app.get('/test-webhook', (req, res) => {
                         });
                         
                         const text = await response.text();
-                        document.getElementById('result').innerHTML = 
+                        
+                        resultDiv.innerHTML = 
                             '<h3>Response:</h3>' + 
-                            '<p>Status: ' + response.status + '</p>' +
-                            '<p>Response: ' + text + '</p>' +
+                            '<p><strong>Status:</strong> ' + response.status + ' ' + response.statusText + '</p>' +
+                            '<p><strong>Response:</strong> ' + text + '</p>' +
                             '<h3>Payload Sent:</h3>' +
-                            '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+                            '<pre>' + JSON.stringify(payload, null, 2) + '</pre>' +
+                            '<p><a href="/view-events">View Events →</a></p>';
                     } catch (error) {
-                        document.getElementById('result').innerHTML = 'Error: ' + error.message;
+                        resultDiv.innerHTML = '<h3>Error:</h3><p>' + error.message + '</p>';
                     }
                 });
             </script>
@@ -262,7 +528,7 @@ app.post('/webhook', (req, res) => {
     let fromNumber = payload.from || payload.source || payload.sender || null;
     let toNumber = payload.to || payload.destination || payload.recipient || null;
     let status = payload.status || payload.deliveryStatus || payload.state || null;
-    let direction = payload.direction || (fromNumber ? 'outbound' : 'inbound');
+    let direction = payload.direction || (fromNumber && !toNumber ? 'inbound' : 'outbound');
     
     // Store in database
     const stmt = db.prepare(`
@@ -316,7 +582,13 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                 payload.type || payload.messageType || 'sms',
                 status || 'pending',
                 new Date().toISOString()
-            ]);
+            ], function(err) {
+                if (err) {
+                    console.error('Error inserting message log:', err);
+                } else {
+                    console.log('Message log created for:', messageId);
+                }
+            });
         } else {
             // Update existing message
             if (status === 'delivered' || status === 'DELIVRD') {
@@ -324,7 +596,13 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                     UPDATE message_logs 
                     SET status = ?, delivered_time = ?
                     WHERE message_id = ?
-                `, ['delivered', new Date().toISOString(), messageId]);
+                `, ['delivered', new Date().toISOString(), messageId], function(err) {
+                    if (err) {
+                        console.error('Error updating message log:', err);
+                    } else {
+                        console.log('Message status updated to delivered:', messageId);
+                    }
+                });
             } else if (status === 'failed' || status === 'REJECTED') {
                 db.run(`
                     UPDATE message_logs 
@@ -342,7 +620,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
     });
 }
 
-// View all webhook events
+// View all webhook events (JSON)
 app.get('/events', (req, res) => {
     const limit = req.query.limit || 100;
     
@@ -359,7 +637,7 @@ app.get('/events', (req, res) => {
     });
 });
 
-// View message logs
+// View message logs (JSON)
 app.get('/messages', (req, res) => {
     const limit = req.query.limit || 50;
     
@@ -399,12 +677,12 @@ app.get('/stats', (req, res) => {
     db.serialize(() => {
         // Total events
         db.get('SELECT COUNT(*) as total FROM webhook_events', [], (err, row) => {
-            stats.totalEvents = row.total;
+            stats.totalEvents = row ? row.total : 0;
         });
         
         // Events by type
         db.all('SELECT event_type, COUNT(*) as count FROM webhook_events GROUP BY event_type', [], (err, rows) => {
-            stats.eventsByType = rows;
+            stats.eventsByType = rows || [];
         });
         
         // Message statistics
@@ -418,12 +696,19 @@ app.get('/stats', (req, res) => {
                 SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END) as outboundMessages
             FROM message_logs
         `, [], (err, row) => {
-            stats.messageStats = row;
+            stats.messageStats = row || {
+                totalMessages: 0,
+                deliveredMessages: 0,
+                failedMessages: 0,
+                pendingMessages: 0,
+                inboundMessages: 0,
+                outboundMessages: 0
+            };
         });
         
         // Recent activity
         db.get('SELECT MAX(received_at) as lastEvent FROM webhook_events', [], (err, row) => {
-            stats.lastEvent = row.lastEvent;
+            stats.lastEvent = row ? row.lastEvent : null;
             
             // Send response after all queries are done
             setTimeout(() => {
@@ -441,7 +726,18 @@ app.get('/stats', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+        error: 'Internal server error',
+        message: err.message 
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ 
+        error: 'Not found',
+        message: `Endpoint ${req.method} ${req.url} does not exist`
+    });
 });
 
 // Start server
@@ -449,16 +745,20 @@ app.listen(PORT, () => {
     console.log('\n=== GMS Webhook Server ===');
     console.log(`Server running on port ${PORT}`);
     console.log(`Local URL: http://localhost:${PORT}`);
-    console.log(`\n📋 Your callback URL endpoint:`);
+    console.log(`\nYour callback URL endpoint:`);
     console.log(`   POST http://localhost:${PORT}/webhook`);
-    console.log(`\n📊 Management endpoints:`);
-    console.log(`   GET  http://localhost:${PORT}/events - View webhook events`);
-    console.log(`   GET  http://localhost:${PORT}/messages - View message logs`);
+    console.log(`\nManagement endpoints:`);
+    console.log(`   GET  http://localhost:${PORT}/ - Home page`);
+    console.log(`   GET  http://localhost:${PORT}/view-events - View events in browser`);
+    console.log(`   GET  http://localhost:${PORT}/view-messages - View messages in browser`);
+    console.log(`   GET  http://localhost:${PORT}/events - View webhook events (JSON)`);
+    console.log(`   GET  http://localhost:${PORT}/messages - View message logs (JSON)`);
     console.log(`   GET  http://localhost:${PORT}/stats - View statistics`);
     console.log(`   GET  http://localhost:${PORT}/callback-url - Get callback URL`);
     console.log(`   GET  http://localhost:${PORT}/test-webhook - Test page`);
+    console.log(`   GET  http://localhost:${PORT}/health - Health check`);
     
-    console.log('\n🌐 To expose this to the internet (for GMS):');
+    console.log('\nTo expose this to the internet (for GMS):');
     console.log('   npx ngrok http 3000');
-    console.log('\n📥 Waiting for GMS webhooks...\n');
+    console.log('\nWaiting for GMS webhooks...\n');
 });
