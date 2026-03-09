@@ -127,7 +127,6 @@ app.get('/', (req, res) => {
                 </ul>
 
 <!-- Status section -->
-
 <h2><i class="fas fa-heartbeat" style="color: #ff6b6b; margin-right: 10px;"></i>System Health</h2>
 <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px;">
     
@@ -547,52 +546,84 @@ app.get('/test-webhook', (req, res) => {
     `);
 });
 
-// Main webhook endpoint for GMS
+// ========== FIXED WEBHOOK ENDPOINT ==========
+// Main webhook endpoint for GMS/Bandwidth
 app.post('/webhook', (req, res) => {
     console.log('=== GMS Webhook Received ===');
     console.log('Time:', new Date().toISOString());
     console.log('Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-
-    // Extract common fields (GMS specific payload structure)
+    
+    // Check if payload is an array (Bandwidth sends array)
     const payload = req.body;
+    console.log('Payload type:', Array.isArray(payload) ? 'Array' : 'Object');
+    console.log('Raw Body:', JSON.stringify(payload, null, 2));
+
+    // Handle both array and single object
+    const events = Array.isArray(payload) ? payload : [payload];
     
-    // Try to determine event type based on common GMS patterns
-    let eventType = payload.eventType || payload.type || payload.event || 'unknown';
-    let messageId = payload.messageId || payload.message_id || payload.id || null;
-    let fromNumber = payload.from || payload.source || payload.sender || null;
-    let toNumber = payload.to || payload.destination || payload.recipient || null;
-    let status = payload.status || payload.deliveryStatus || payload.state || null;
-    let direction = payload.direction || (fromNumber && !toNumber ? 'inbound' : 'outbound');
-    
-    // Store in database
-    const stmt = db.prepare(`
-        INSERT INTO webhook_events 
-        (event_type, message_id, from_number, to_number, direction, status, raw_payload)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+    events.forEach(event => {
+        // Extract fields based on Bandwidth's structure
+        let eventType = event.type || 'unknown';
+        let messageId = event.message?.id || event.messageId || null;
+        let fromNumber = event.message?.from || event.from || null;
+        
+        // Handle 'to' field which could be array or string
+        let toNumber = null;
+        if (event.message?.to) {
+            toNumber = Array.isArray(event.message.to) ? event.message.to[0] : event.message.to;
+        } else {
+            toNumber = event.to || null;
+        }
+        
+        let status = event.type?.replace('message-', '') || event.status || null;
+        let direction = event.message?.direction || event.direction || null;
+        
+        // Determine direction if not provided
+        if (!direction) {
+            // If from number is our own number, it's outbound
+            direction = (fromNumber === '+12135373887' ? 'outbound' : 'inbound');
+        }
 
-    stmt.run(
-        eventType,
-        messageId,
-        fromNumber,
-        toNumber,
-        direction,
-        status,
-        JSON.stringify(payload)
-    );
+        console.log('Processed Event:', {
+            eventType,
+            messageId,
+            fromNumber,
+            toNumber,
+            direction,
+            status
+        });
 
-    stmt.finalize();
+        // Store in database
+        const stmt = db.prepare(`
+            INSERT INTO webhook_events 
+            (event_type, message_id, from_number, to_number, direction, status, raw_payload)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
 
-    // Update message logs if this is a message-related event
-    if (messageId) {
-        updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload);
-    }
+        stmt.run(
+            eventType,
+            messageId,
+            fromNumber,
+            toNumber,
+            direction,
+            status,
+            JSON.stringify(event)  // Store individual event, not the whole array
+        );
+
+        stmt.finalize();
+
+        // Update message logs if this is a message-related event
+        if (messageId) {
+            updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, event);
+        }
+    });
 
     // Always return 200 OK
     res.status(200).send('OK');
 });
+// ========== END FIXED WEBHOOK ENDPOINT ==========
 
+// ========== UPDATED HELPER FUNCTION ==========
 // Helper function to update message logs
 function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
     // Check if message exists
@@ -600,6 +631,14 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
         if (err) {
             console.error('Error checking message log:', err);
             return;
+        }
+
+        // Extract message content
+        let messageContent = payload.message?.text || payload.text || payload.content || '';
+        
+        // Handle empty text (like in your example)
+        if (messageContent === '') {
+            messageContent = '[No text content]';
         }
 
         if (!row) {
@@ -613,10 +652,10 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                 fromNumber, 
                 toNumber, 
                 direction, 
-                payload.content || payload.text || payload.message || null,
-                payload.type || payload.messageType || 'sms',
+                messageContent,
+                'sms',  // Default to sms
                 status || 'pending',
-                new Date().toISOString()
+                payload.message?.time || payload.time || new Date().toISOString()
             ], function(err) {
                 if (err) {
                     console.error('Error inserting message log:', err);
@@ -625,26 +664,26 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                 }
             });
         } else {
-            // Update existing message
-            if (status === 'delivered' || status === 'DELIVRD') {
+            // Update existing message based on event type
+            if (eventType === 'message-delivered' || status === 'delivered') {
                 db.run(`
                     UPDATE message_logs 
                     SET status = ?, delivered_time = ?
                     WHERE message_id = ?
-                `, ['delivered', new Date().toISOString(), messageId], function(err) {
+                `, ['delivered', payload.time || new Date().toISOString(), messageId], function(err) {
                     if (err) {
                         console.error('Error updating message log:', err);
                     } else {
                         console.log('Message status updated to delivered:', messageId);
                     }
                 });
-            } else if (status === 'failed' || status === 'REJECTED') {
+            } else if (eventType === 'message-failed' || status === 'failed' || status === 'REJECTED') {
                 db.run(`
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
                 `, ['failed', messageId]);
-            } else if (status === 'sent') {
+            } else if (eventType === 'message-sent' || status === 'sent') {
                 db.run(`
                     UPDATE message_logs 
                     SET status = ?
@@ -654,6 +693,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
         }
     });
 }
+// ========== END UPDATED HELPER FUNCTION ==========
 
 // View all webhook events (JSON)
 app.get('/events', (req, res) => {
