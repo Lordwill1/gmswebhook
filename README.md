@@ -1,6 +1,7 @@
 # Webhook Server
 
 A robust webhook server for handling Bandwidth messaging events with real-time processing, database storage, and comprehensive monitoring capabilities. Perfect for integrating Bandwidth's SMS/MMS services with your applications.
+<img width="804" height="629" alt="image" src="https://github.com/user-attachments/assets/e5ef0b0e-4808-4107-a94f-ac4332f0599b" />
 
 ## What This Does
 
@@ -12,7 +13,7 @@ This server acts as a "mailbox" for our Bandwidth phone number **+1 (213) 537---
 - **Outgoing SMS** - When we send messages out
 - **Delivery Status** - Whether messages were delivered, failed, etc.
 - **Message Content** - The actual text being sent/received
-
+<img width="924" height="614" alt="image" src="https://github.com/user-attachments/assets/e923aedf-b3d7-43e0-af28-8f8a116b69cc" />
 
 ## How To Use
 
