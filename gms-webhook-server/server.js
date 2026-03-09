@@ -70,41 +70,7 @@ app.get('/', (req, res) => {
                 body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
                 .container { max-width: 800px; margin: 0 auto; }
                 .url-box { background: #f0f0f0; padding: 20px; border-radius: 5px; margin: 20px 0; }
-                .url-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    background: white;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                    padding: 5px 5px 5px 15px;
-                }
-                .url { 
-                    font-size: 1.2em; 
-                    font-weight: bold; 
-                    color: #0066cc;
-                    flex: 1;
-                    word-break: break-all;
-                }
-                .copy-btn {
-                    background: #667eea;
-                    color: white;
-                    border: none;
-                    padding: 8px 15px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    display: flex;
-                    align-items: center;
-                    gap: 5px;
-                    transition: background 0.3s;
-                }
-                .copy-btn:hover {
-                    background: #5a67d8;
-                }
-                .copy-btn.copied {
-                    background: #48bb78;
-                }
+                .url { font-size: 1.2em; font-weight: bold; color: #0066cc; }
                 code { background: #e0e0e0; padding: 2px 5px; border-radius: 3px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -126,13 +92,7 @@ app.get('/', (req, res) => {
                 
                 <div class="url-box">
                     <h2>Your Callback URL:</h2>
-                    <div class="url-container">
-                        <span class="url" id="callbackUrl">${callbackUrl}</span>
-                        <button class="copy-btn" onclick="copyToClipboard()" id="copyButton">
-                            <i class="fas fa-copy"></i>
-                            <span>Copy</span>
-                        </button>
-                    </div>
+                    <div class="url">${callbackUrl}</div>
                     <p><small>Use this URL in your GMS application settings for message status callbacks</small></p>
                 </div>
 
@@ -166,127 +126,83 @@ app.get('/', (req, res) => {
                     <li><strong>Message Events</strong> - queued, sent, delivered, failed, etc.</li>
                 </ul>
 
-                <!-- Status section -->
-                <h2><i class="fas fa-heartbeat" style="color: #ff6b6b; margin-right: 10px;"></i>System Health</h2>
-                <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px;">
-                    
-                    <!-- Server Status Bar -->
-                    <div style="margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                            <span style="width: 100px; font-weight: 600; color: #555;">
-                                <i class="fas fa-server" style="margin-right: 5px; color: #4CAF50;"></i> Server:
-                            </span>
-                            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
-                            <span style="font-weight: 500;">Running</span>
-                            <span style="margin-left: auto; background: #4CAF50; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
-                                <i class="fas fa-check-circle" style="margin-right: 5px;"></i>Active
-                            </span>
-                        </div>
-                        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
-                            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 5px;"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Database Status Bar -->
-                    <div style="margin-bottom: 20px;">
-                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                            <span style="width: 100px; font-weight: 600; color: #555;">
-                                <i class="fas fa-database" style="margin-right: 5px; color: #2196F3;"></i> Database:
-                            </span>
-                            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
-                            <span style="font-weight: 500;">SQLite Connected</span>
-                            <span style="margin-left: auto; background: #2196F3; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
-                                <i class="fas fa-plug" style="margin-right: 5px;"></i>Online
-                            </span>
-                        </div>
-                        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
-                            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #2196F3, #64B5F6); border-radius: 5px;"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Statistics Row -->
-                    <div style="display: flex; justify-content: space-between; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0;">
-                        
-                        <div style="text-align: center; flex: 1;">
-                            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
-                                <i class="fas fa-clock" style="font-size: 24px; color: #ff9800; margin-bottom: 8px;"></i>
-                                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Current Time</div>
-                                <div style="font-size: 18px; font-weight: bold; color: #333; margin-top: 5px;">${new Date().toLocaleTimeString()}</div>
-                                <div style="font-size: 14px; color: #666;">${new Date().toLocaleDateString()}</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; flex: 1;">
-                            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
-                                <i class="fas fa-chart-line" style="font-size: 24px; color: #9c27b0; margin-bottom: 8px;"></i>
-                                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Uptime</div>
-                                <div style="font-size: 22px; font-weight: bold; color: #9c27b0; margin-top: 5px;">${Math.floor(process.uptime() / 60)} <span style="font-size: 14px;">min</span></div>
-                                <div style="font-size: 13px; color: #666;">${Math.floor(process.uptime())} seconds</div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; flex: 1;">
-                            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
-                                <i class="fas fa-check-circle" style="font-size: 24px; color: #4CAF50; margin-bottom: 8px;"></i>
-                                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
-                                <div style="font-size: 20px; font-weight: bold; color: #4CAF50; margin-top: 8px;">
-                                    <span style="color: #4CAF50;">●</span> Healthy
-                                </div>
-                                <div style="font-size: 13px; color: #666;">All Systems Go</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Optional: Small footer note -->
-                    <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #999;">
-                        <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Auto-refresh every 30s
-                    </div>
-                </div>
+<!-- Status section -->
+<h2><i class="fas fa-heartbeat" style="color: #ff6b6b; margin-right: 10px;"></i>System Health</h2>
+<div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px;">
+    
+    <!-- Server Status Bar -->
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="width: 100px; font-weight: 600; color: #555;">
+                <i class="fas fa-server" style="margin-right: 5px; color: #4CAF50;"></i> Server:
+            </span>
+            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
+            <span style="font-weight: 500;">Running</span>
+            <span style="margin-left: auto; background: #4CAF50; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
+                <i class="fas fa-check-circle" style="margin-right: 5px;"></i>Active
+            </span>
+        </div>
+        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 5px;"></div>
+        </div>
+    </div>
+    
+    <!-- Database Status Bar -->
+    <div style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <span style="width: 100px; font-weight: 600; color: #555;">
+                <i class="fas fa-database" style="margin-right: 5px; color: #2196F3;"></i> Database:
+            </span>
+            <span style="color: #4CAF50; margin-right: 10px; font-size: 20px;">●</span>
+            <span style="font-weight: 500;">SQLite Connected</span>
+            <span style="margin-left: auto; background: #2196F3; color: white; padding: 4px 15px; border-radius: 25px; font-size: 12px; font-weight: 600;">
+                <i class="fas fa-plug" style="margin-right: 5px;"></i>Online
+            </span>
+        </div>
+        <div style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+            <div style="height: 10px; width: 100%; background: linear-gradient(90deg, #2196F3, #64B5F6); border-radius: 5px;"></div>
+        </div>
+    </div>
+    
+    <!-- Statistics Row -->
+    <div style="display: flex; justify-content: space-between; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e0e0;">
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-clock" style="font-size: 24px; color: #ff9800; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Current Time</div>
+                <div style="font-size: 18px; font-weight: bold; color: #333; margin-top: 5px;">${new Date().toLocaleTimeString()}</div>
+                <div style="font-size: 14px; color: #666;">${new Date().toLocaleDateString()}</div>
             </div>
-
-            <script>
-                function copyToClipboard() {
-                    const urlText = document.getElementById('callbackUrl').textContent;
-                    const button = document.getElementById('copyButton');
-                    const buttonSpan = button.querySelector('span');
-                    const buttonIcon = button.querySelector('i');
-                    
-                    // Copy to clipboard
-                    navigator.clipboard.writeText(urlText).then(() => {
-                        // Change button appearance
-                        button.classList.add('copied');
-                        buttonIcon.className = 'fas fa-check';
-                        buttonSpan.textContent = 'Copied!';
-                        
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
-                            button.classList.remove('copied');
-                            buttonIcon.className = 'fas fa-copy';
-                            buttonSpan.textContent = 'Copy';
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('Failed to copy: ', err);
-                        // Fallback for older browsers
-                        const textArea = document.createElement('textarea');
-                        textArea.value = urlText;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        
-                        // Show feedback
-                        button.classList.add('copied');
-                        buttonIcon.className = 'fas fa-check';
-                        buttonSpan.textContent = 'Copied!';
-                        
-                        setTimeout(() => {
-                            button.classList.remove('copied');
-                            buttonIcon.className = 'fas fa-copy';
-                            buttonSpan.textContent = 'Copy';
-                        }, 2000);
-                    });
-                }
-            </script>
+        </div>
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-chart-line" style="font-size: 24px; color: #9c27b0; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Uptime</div>
+                <div style="font-size: 22px; font-weight: bold; color: #9c27b0; margin-top: 5px;">${Math.floor(process.uptime() / 60)} <span style="font-size: 14px;">min</span></div>
+                <div style="font-size: 13px; color: #666;">${Math.floor(process.uptime())} seconds</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; flex: 1;">
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 0 5px;">
+                <i class="fas fa-check-circle" style="font-size: 24px; color: #4CAF50; margin-bottom: 8px;"></i>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4CAF50; margin-top: 8px;">
+                    <span style="color: #4CAF50;">●</span> Healthy
+                </div>
+                <div style="font-size: 13px; color: #666;">All Systems Go</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Optional: Small footer note -->
+    <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #999;">
+        <i class="fas fa-sync-alt" style="margin-right: 5px;"></i> Auto-refresh every 30s
+    </div>
+</div>
+            </div>
         </body>
         </html>
     `);
@@ -646,48 +562,21 @@ app.post('/webhook', (req, res) => {
     const events = Array.isArray(payload) ? payload : [payload];
     
     events.forEach(event => {
-        // Check if this is a status update (has nested message object) or message creation
-        const isStatusUpdate = event.type && event.type.startsWith('message-') && event.message;
-        const isMessageCreation = event.id && event.text !== undefined;
-        
         // Extract fields based on Bandwidth's structure
-        let eventType = event.type || 'message-created';
-        
-        // For status updates, the message ID is in event.message.id
-        // For message creation, the ID is at the root
-        let messageId = event.message?.id || event.id || null;
-        
-        // For status updates, from/to are in event.message
-        // For message creation, they're at the root
+        let eventType = event.type || 'unknown';
+        let messageId = event.message?.id || event.messageId || null;
         let fromNumber = event.message?.from || event.from || null;
         
         // Handle 'to' field which could be array or string
         let toNumber = null;
         if (event.message?.to) {
             toNumber = Array.isArray(event.message.to) ? event.message.to[0] : event.message.to;
-        } else if (event.to) {
-            toNumber = Array.isArray(event.to) ? event.to[0] : event.to;
+        } else {
+            toNumber = event.to || null;
         }
         
         let status = event.type?.replace('message-', '') || event.status || null;
         let direction = event.message?.direction || event.direction || null;
-        
-        // Get message text - check multiple locations
-        let messageText = '';
-        
-        if (isMessageCreation) {
-            // This is the actual message creation with text at root level
-            messageText = event.text || '';
-            console.log('✅ Message creation detected with text:', messageText);
-        } else if (isStatusUpdate && event.message) {
-            // This is a status update with message object containing text
-            messageText = event.message.text || '';
-            console.log('📊 Status update detected with message text:', messageText);
-        } else {
-            // Fallback: check other possible locations
-            messageText = event.text || event.content || event.message?.content || '';
-            console.log('⚠️ Using fallback text extraction:', messageText);
-        }
         
         // Determine direction if not provided
         if (!direction) {
@@ -695,16 +584,13 @@ app.post('/webhook', (req, res) => {
             direction = (fromNumber === '+12135373887' ? 'outbound' : 'inbound');
         }
 
-        console.log('📝 Processed Event:', {
+        console.log('Processed Event:', {
             eventType,
             messageId,
             fromNumber,
             toNumber,
             direction,
-            status,
-            isStatusUpdate,
-            isMessageCreation,
-            messageText: messageText || '[Empty]'
+            status
         });
 
         // Store in database
@@ -721,14 +607,14 @@ app.post('/webhook', (req, res) => {
             toNumber,
             direction,
             status,
-            JSON.stringify(event)
+            JSON.stringify(event)  // Store individual event, not the whole array
         );
 
         stmt.finalize();
 
         // Update message logs if this is a message-related event
         if (messageId) {
-            updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, event, messageText, isMessageCreation);
+            updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, event);
         }
     });
 
@@ -737,9 +623,9 @@ app.post('/webhook', (req, res) => {
 });
 // ========== END FIXED WEBHOOK ENDPOINT ==========
 
-// ========== FIXED HELPER FUNCTION ==========
+// ========== UPDATED HELPER FUNCTION ==========
 // Helper function to update message logs
-function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload, messageText, isMessageCreation) {
+function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
     // Check if message exists
     db.get('SELECT * FROM message_logs WHERE message_id = ?', [messageId], (err, row) => {
         if (err) {
@@ -747,51 +633,16 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
             return;
         }
 
-        // Determine the correct message content
-        let finalMessageText = '';
+        // Extract message content
+        let messageContent = payload.message?.text || payload.text || payload.content || '';
         
-        if (isMessageCreation) {
-            // This is the actual message creation - use the text we extracted
-            finalMessageText = messageText;
-            console.log('📝 Message creation - using text:', finalMessageText);
-        } else if (messageText && messageText !== '') {
-            // We have text from somewhere
-            finalMessageText = messageText;
-        } else if (payload.message?.text) {
-            // Text is in nested message object
-            finalMessageText = payload.message.text;
-        } else if (payload.text) {
-            // Text is at root level
-            finalMessageText = payload.text;
-        } else if (payload.content) {
-            // Text is in content field
-            finalMessageText = payload.content;
-        } else if (row) {
-            // Message exists in database, keep existing content
-            finalMessageText = row.message_content;
-            console.log('💾 Using existing message content:', finalMessageText);
-        } else {
-            // New message but no text - might be status update arriving before message
-            finalMessageText = '[Pending content]';
-            console.log('⏳ No text found, marking as pending');
+        // Handle empty text (like in your example)
+        if (messageContent === '') {
+            messageContent = '[No text content]';
         }
-
-        // If we still don't have text and this is a status update, check if we have the message in database
-        if ((!finalMessageText || finalMessageText === '') && row) {
-            finalMessageText = row.message_content;
-        }
-
-        console.log(`🔄 Updating message log for ${messageId}:`, {
-            exists: !!row,
-            finalMessageText: finalMessageText || '[Empty]',
-            status: status,
-            isMessageCreation
-        });
 
         if (!row) {
             // New message
-            const sentTime = payload.message?.time || payload.time || new Date().toISOString();
-            
             db.run(`
                 INSERT INTO message_logs 
                 (message_id, from_number, to_number, direction, message_content, message_type, status, sent_time)
@@ -801,74 +652,48 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                 fromNumber, 
                 toNumber, 
                 direction, 
-                finalMessageText || '[No content]',
-                'sms',
+                messageContent,
+                'sms',  // Default to sms
                 status || 'pending',
-                sentTime
+                payload.message?.time || payload.time || new Date().toISOString()
             ], function(err) {
                 if (err) {
-                    console.error('❌ Error inserting message log:', err);
+                    console.error('Error inserting message log:', err);
                 } else {
-                    console.log('✅ Message log created for:', messageId, 'with content:', finalMessageText);
+                    console.log('Message log created for:', messageId);
                 }
             });
         } else {
             // Update existing message based on event type
-            let updateFields = [];
-            let updateValues = [];
-            
-            // Update status based on event type
             if (eventType === 'message-delivered' || status === 'delivered') {
-                updateFields.push('status = ?', 'delivered_time = ?');
-                updateValues.push('delivered', payload.time || new Date().toISOString());
-                console.log('📬 Updating status to delivered for:', messageId);
-            } else if (eventType === 'message-failed' || status === 'failed' || status === 'REJECTED') {
-                updateFields.push('status = ?');
-                updateValues.push('failed');
-                console.log('❌ Updating status to failed for:', messageId);
-            } else if (eventType === 'message-sent' || status === 'sent') {
-                updateFields.push('status = ?');
-                updateValues.push('sent');
-                console.log('📤 Updating status to sent for:', messageId);
-            }
-            
-            // If we have actual message text and the existing one is placeholder, update it
-            if (finalMessageText && 
-                finalMessageText !== '[Pending content]' && 
-                finalMessageText !== '[No content]' &&
-                finalMessageText !== '' &&
-                row.message_content !== finalMessageText) {
-                
-                // Check if existing content is placeholder or empty
-                if (row.message_content === '[Pending content]' || 
-                    row.message_content === '[No content]' || 
-                    row.message_content === '' ||
-                    row.message_content !== finalMessageText) {
-                    
-                    updateFields.push('message_content = ?');
-                    updateValues.push(finalMessageText);
-                    console.log('📝 Updating message content from', row.message_content, 'to', finalMessageText);
-                }
-            }
-            
-            if (updateFields.length > 0) {
-                const query = `UPDATE message_logs SET ${updateFields.join(', ')} WHERE message_id = ?`;
-                updateValues.push(messageId);
-                
-                db.run(query, updateValues, function(err) {
+                db.run(`
+                    UPDATE message_logs 
+                    SET status = ?, delivered_time = ?
+                    WHERE message_id = ?
+                `, ['delivered', payload.time || new Date().toISOString(), messageId], function(err) {
                     if (err) {
-                        console.error('❌ Error updating message log:', err);
+                        console.error('Error updating message log:', err);
                     } else {
-                        console.log('✅ Message log updated for:', messageId);
+                        console.log('Message status updated to delivered:', messageId);
                     }
                 });
-            } else {
-                console.log('⏸️ No updates needed for:', messageId);
+            } else if (eventType === 'message-failed' || status === 'failed' || status === 'REJECTED') {
+                db.run(`
+                    UPDATE message_logs 
+                    SET status = ?
+                    WHERE message_id = ?
+                `, ['failed', messageId]);
+            } else if (eventType === 'message-sent' || status === 'sent') {
+                db.run(`
+                    UPDATE message_logs 
+                    SET status = ?
+                    WHERE message_id = ?
+                `, ['sent', messageId]);
             }
         }
     });
 }
-// ========== END FIXED HELPER FUNCTION ==========
+// ========== END UPDATED HELPER FUNCTION ==========
 
 // View all webhook events (JSON)
 app.get('/events', (req, res) => {
