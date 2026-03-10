@@ -655,7 +655,7 @@ app.post('/webhook', (req, res) => {
 });
 // ========== END FIXED WEBHOOK ENDPOINT ==========
 
-// ========== UPDATED HELPER FUNCTION - ONLY THIS SECTION WAS UPDATED ==========
+// ========== UPDATED HELPER FUNCTION ==========
 // Helper function to update message logs
 function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
     // Check if message exists
@@ -665,64 +665,36 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
             return;
         }
 
-        // Extract message content - Check multiple possible locations
-        let messageContent = '';
+        // Extract message content
+        let messageContent = payload.message?.text || payload.text || payload.content || '';
         
-        // For message-sent events, text is in message.text
-        if (payload.message?.text) {
-            messageContent = payload.message.text;
-        }
-        // For outbound message events from Postman, text is at root
-        else if (payload.text) {
-            messageContent = payload.text;
-        }
-        // For other formats
-        else if (payload.content) {
-            messageContent = payload.content;
-        }
-        
-        // Handle empty text
+        // Handle empty text (like in your example)
         if (messageContent === '') {
-            // If we're updating an existing message, don't overwrite with empty
-            if (row && row.message_content && row.message_content !== '[No text content]') {
-                // Keep existing message content
-                messageContent = row.message_content;
-            } else {
-                messageContent = '[No text content]';
-            }
+            messageContent = '[No text content]';
         }
-
-        console.log('Extracted message content:', messageContent); // Debug log
-        console.log('Event type:', eventType); // Debug log
-        console.log('Row exists:', !!row); // Debug log
 
         if (!row) {
-            // This is a new message - should only happen for message-sent or message-inbound events
-            // Don't create new message records for delivery receipts
-            if (eventType === 'message-sent' || eventType === 'message-inbound' || status === 'sent') {
-                db.run(`
-                    INSERT INTO message_logs 
-                    (message_id, from_number, to_number, direction, message_content, message_type, status, sent_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
-                    messageId, 
-                    fromNumber, 
-                    toNumber, 
-                    direction, 
-                    messageContent,
-                    'sms',  // Default to sms
-                    'sent',
-                    payload.message?.time || payload.time || new Date().toISOString()
-                ], function(err) {
-                    if (err) {
-                        console.error('Error inserting message log:', err);
-                    } else {
-                        console.log('Message log created for:', messageId);
-                    }
-                });
-            } else {
-                console.log('Not creating message log for event type:', eventType);
-            }
+            // New message
+            db.run(`
+                INSERT INTO message_logs 
+                (message_id, from_number, to_number, direction, message_content, message_type, status, sent_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                messageId, 
+                fromNumber, 
+                toNumber, 
+                direction, 
+                messageContent,
+                'sms',  // Default to sms
+                status || 'pending',
+                payload.message?.time || payload.time || new Date().toISOString()
+            ], function(err) {
+                if (err) {
+                    console.error('Error inserting message log:', err);
+                } else {
+                    console.log('Message log created for:', messageId);
+                }
+            });
         } else {
             // Update existing message based on event type
             if (eventType === 'message-delivered' || status === 'delivered') {
@@ -742,26 +714,13 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
-                `, ['failed', messageId], function(err) {
-                    if (err) {
-                        console.error('Error updating message log:', err);
-                    } else {
-                        console.log('Message status updated to failed:', messageId);
-                    }
-                });
+                `, ['failed', messageId]);
             } else if (eventType === 'message-sent' || status === 'sent') {
-                // Update sent status but don't overwrite message content if it exists
                 db.run(`
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
-                `, ['sent', messageId], function(err) {
-                    if (err) {
-                        console.error('Error updating message log:', err);
-                    } else {
-                        console.log('Message status updated to sent:', messageId);
-                    }
-                });
+                `, ['sent', messageId]);
             }
         }
     });
