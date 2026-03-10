@@ -655,7 +655,7 @@ app.post('/webhook', (req, res) => {
 });
 // ========== END FIXED WEBHOOK ENDPOINT ==========
 
-// ========== UPDATED HELPER FUNCTION ==========
+// ========== UPDATED HELPER FUNCTION - FIXED TEXT EXTRACTION ==========
 // Helper function to update message logs
 function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
     // Check if message exists
@@ -665,13 +665,27 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
             return;
         }
 
-        // Extract message content
-        let messageContent = payload.message?.text || payload.text || payload.content || '';
+        // Extract message content - FIXED: Check root level text first (Bandwidth format)
+        let messageContent = '';
         
-        // Handle empty text (like in your example)
+        // Bandwidth sends text at the root level for outbound messages
+        if (payload.text) {
+            messageContent = payload.text;
+        }
+        // For other formats, check nested locations
+        else if (payload.message?.text) {
+            messageContent = payload.message.text;
+        }
+        else if (payload.content) {
+            messageContent = payload.content;
+        }
+        
+        // Handle empty text
         if (messageContent === '') {
             messageContent = '[No text content]';
         }
+
+        console.log('Extracted message content:', messageContent); // Debug log
 
         if (!row) {
             // New message
@@ -687,7 +701,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                 messageContent,
                 'sms',  // Default to sms
                 status || 'pending',
-                payload.message?.time || payload.time || new Date().toISOString()
+                payload.time || new Date().toISOString() // Bandwidth uses 'time' at root level
             ], function(err) {
                 if (err) {
                     console.error('Error inserting message log:', err);
