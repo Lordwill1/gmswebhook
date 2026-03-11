@@ -134,6 +134,7 @@ app.get('/', (req, res) => {
                     <a href="/stats" class="btn">Statistics</a>
                     <a href="/test-webhook" class="btn">Test Webhook</a>
                     <a href="/health" class="btn">Health Check</a>
+                    <a href="/debug-directions" class="btn">Debug Directions</a>
                 </div>
 
                 <h2>Available Endpoints:</h2>
@@ -149,6 +150,7 @@ app.get('/', (req, res) => {
                     <li><code>GET /callback-url</code> - Get callback URL in JSON format</li>
                     <li><code>GET /test-webhook</code> - Test page for sending sample webhooks</li>
                     <li><code>GET /health</code> - Health check endpoint</li>
+                    <li><code>GET /debug-directions</code> - Debug direction values</li>
                 </ul>
 
                 <h2>GMS Webhook Formats Accepted:</h2>
@@ -956,7 +958,7 @@ app.get('/stats', (req, res) => {
 // ========== END FIXED STATISTICS ENDPOINT ==========
 
 // Debug endpoint to check direction values (helpful for troubleshooting)
-app.get('/debug/directions', (req, res) => {
+app.get('/debug-directions', (req, res) => {
     db.all('SELECT direction, COUNT(*) as count FROM message_logs GROUP BY direction', [], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
@@ -1012,7 +1014,7 @@ app.listen(PORT, () => {
     console.log(`   GET  http://localhost:${PORT}/callback-url - Get callback URL`);
     console.log(`   GET  http://localhost:${PORT}/test-webhook - Test page`);
     console.log(`   GET  http://localhost:${PORT}/health - Health check`);
-    console.log(`   GET  http://localhost:${PORT}/debug/directions - Debug direction values`);
+    console.log(`   GET  http://localhost:${PORT}/debug-directions - Debug direction values`);
     
     console.log('\nTo expose this to the internet (for GMS):');
     console.log('   npx ngrok http 3000');
