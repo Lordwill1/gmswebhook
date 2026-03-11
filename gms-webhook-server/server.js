@@ -578,6 +578,85 @@ app.get('/test-webhook', (req, res) => {
     `);
 });
 
+// ========== IMPROVED DIRECTION DETECTION FUNCTION ==========
+function detectDirection(event) {
+    // Check direct direction field
+    if (event.direction) {
+        return event.direction.toLowerCase();
+    }
+    
+    // Check message object
+    if (event.message?.direction) {
+        return event.message.direction.toLowerCase();
+    }
+    
+    // Check event type
+    if (event.type) {
+        const typeLower = event.type.toLowerCase();
+        
+        // Inbound indicators
+        if (typeLower.includes('inbound') || 
+            typeLower === 'message-received' || 
+            typeLower === 'incoming' ||
+            typeLower === 'mo' ||  // Mobile Originated
+            typeLower === 'mt_final' && event.status === 'Delivered' && event.direction !== 'outbound') {
+            return 'inbound';
+        }
+        
+        // Outbound indicators
+        if (typeLower.includes('outbound') || 
+            typeLower.includes('delivery') ||
+            typeLower === 'message-sent' || 
+            typeLower === 'message-delivered' || 
+            typeLower === 'message-failed' ||
+            typeLower === 'dlr' ||  // Delivery Receipt
+            typeLower === 'mt' ||   // Mobile Terminated
+            typeLower === 'mt_final') {  // Final delivery status for outbound
+            return 'outbound';
+        }
+    }
+    
+    // Check status which might indicate outbound delivery receipts
+    if (event.status) {
+        const statusLower = event.status.toLowerCase();
+        if (['delivered', 'sent', 'failed', 'expired', 'rejected'].includes(statusLower)) {
+            // These statuses typically apply to outbound messages, but check context
+            if (event.from && event.from.toString().length < 6) {
+                // If 'from' is a short code, it's likely outbound
+                return 'outbound';
+            }
+        }
+    }
+    
+    // Check description or other fields
+    if (event.description) {
+        const descLower = event.description.toLowerCase();
+        if (descLower.includes('inbound')) return 'inbound';
+        if (descLower.includes('outbound')) return 'outbound';
+    }
+    
+    // Try to infer from numbers (customize with your actual numbers)
+    const yourShortCodes = ['12345', '67890']; // Add your actual short codes
+    const yourLongNumbers = ['+1234567890']; // Add your actual long numbers
+    
+    if (event.from) {
+        const fromStr = event.from.toString();
+        if (yourShortCodes.includes(fromStr) || yourLongNumbers.includes(fromStr)) {
+            return 'outbound'; // Message from your number/shortcode is outbound
+        }
+    }
+    
+    if (event.to) {
+        const toStr = event.to.toString();
+        if (yourShortCodes.includes(toStr) || yourLongNumbers.includes(toStr)) {
+            return 'inbound'; // Message to your number/shortcode is inbound
+        }
+    }
+    
+    return 'unknown';
+}
+// ========== END IMPROVED DIRECTION DETECTION ==========
+
 // ========== FIXED WEBHOOK ENDPOINT ==========
 // Main webhook endpoint for GMS/Bandwidth
 app.post('/webhook', (req, res) => {
@@ -595,7 +674,7 @@ app.post('/webhook', (req, res) => {
     
     events.forEach(event => {
         // Extract fields based on Bandwidth's structure
-        let eventType = event.type || 'unknown';
+        let eventType = event.type || event.eventType || 'unknown';
         let messageId = event.message?.id || event.messageId || event.id || null;
         let fromNumber = event.message?.from || event.from || null;
         
@@ -608,18 +687,10 @@ app.post('/webhook', (req, res) => {
         }
         
         let status = event.type?.replace('message-', '') || event.status || null;
-        let direction = event.message?.direction || event.direction || null;
         
-        // Determine direction if not provided
-            if (!direction) {
-    if (event.type?.includes('inbound') || event.type === 'message-received') {
-        direction = 'inbound';
-    } else if (event.type?.includes('outbound') || event.type === 'message-sent' || event.type === 'message-delivered' || event.type === 'message-failed') {
-        direction = 'outbound';
-    } else {
-        direction = 'unknown'; // Don't guess
-    }
-}
+        // Use improved direction detection
+        let direction = detectDirection(event);
+
         console.log('Processed Event:', {
             eventType,
             messageId,
@@ -718,13 +789,25 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
-                `, ['failed', messageId]);
+                `, ['failed', messageId], function(err) {
+                    if (err) {
+                        console.error('Error updating message log to failed:', err);
+                    } else {
+                        console.log('Message status updated to failed:', messageId);
+                    }
+                });
             } else if (eventType === 'message-sent' || status === 'sent') {
                 db.run(`
                     UPDATE message_logs 
                     SET status = ?
                     WHERE message_id = ?
-                `, ['sent', messageId]);
+                `, ['sent', messageId], function(err) {
+                    if (err) {
+                        console.error('Error updating message log to sent:', err);
+                    } else {
+                        console.log('Message status updated to sent:', messageId);
+                    }
+                });
             }
         }
     });
@@ -781,55 +864,116 @@ app.get('/messages/:messageId', (req, res) => {
     });
 });
 
-// Get statistics
+// ========== FIXED STATISTICS ENDPOINT ==========
+// Get statistics - FIXED VERSION with proper async handling
 app.get('/stats', (req, res) => {
     const stats = {};
+    let completedQueries = 0;
+    const totalQueries = 4; // Total number of queries we're running
     
+    function checkComplete() {
+        completedQueries++;
+        if (completedQueries === totalQueries) {
+            res.json({
+                success: true,
+                timestamp: new Date().toISOString(),
+                provider: "GMS (Global Message Services)",
+                stats: stats
+            });
+        }
+    }
+    
+    // Use serialize to ensure sequential execution but still need to track completion
     db.serialize(() => {
         // Total events
         db.get('SELECT COUNT(*) as total FROM webhook_events', [], (err, row) => {
-            stats.totalEvents = row ? row.total : 0;
+            if (err) {
+                console.error('Error getting total events:', err);
+                stats.totalEvents = 0;
+            } else {
+                stats.totalEvents = row ? row.total : 0;
+            }
+            checkComplete();
         });
         
         // Events by type
         db.all('SELECT event_type, COUNT(*) as count FROM webhook_events GROUP BY event_type', [], (err, rows) => {
-            stats.eventsByType = rows || [];
+            if (err) {
+                console.error('Error getting events by type:', err);
+                stats.eventsByType = [];
+            } else {
+                stats.eventsByType = rows || [];
+            }
+            checkComplete();
         });
         
-        // Message statistics
+        // Message statistics - IMPROVED QUERY with better direction matching
         db.get(`
             SELECT 
                 COUNT(*) as totalMessages,
                 SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as deliveredMessages,
                 SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failedMessages,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingMessages,
-                SUM(CASE WHEN direction = 'inbound' THEN 1 ELSE 0 END) as inboundMessages,
-                SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END) as outboundMessages
+                SUM(CASE WHEN status = 'pending' OR status = 'sent' OR status IS NULL THEN 1 ELSE 0 END) as pendingMessages,
+                SUM(CASE WHEN direction LIKE '%inbound%' OR direction = 'inbound' THEN 1 ELSE 0 END) as inboundMessages,
+                SUM(CASE WHEN direction LIKE '%outbound%' OR direction = 'outbound' THEN 1 ELSE 0 END) as outboundMessages
             FROM message_logs
         `, [], (err, row) => {
-            stats.messageStats = row || {
-                totalMessages: 0,
-                deliveredMessages: 0,
-                failedMessages: 0,
-                pendingMessages: 0,
-                inboundMessages: 0,
-                outboundMessages: 0
-            };
+            if (err) {
+                console.error('Error getting message stats:', err);
+                stats.messageStats = {
+                    totalMessages: 0,
+                    deliveredMessages: 0,
+                    failedMessages: 0,
+                    pendingMessages: 0,
+                    inboundMessages: 0,
+                    outboundMessages: 0
+                };
+            } else {
+                stats.messageStats = row || {
+                    totalMessages: 0,
+                    deliveredMessages: 0,
+                    failedMessages: 0,
+                    pendingMessages: 0,
+                    inboundMessages: 0,
+                    outboundMessages: 0
+                };
+            }
+            checkComplete();
         });
         
         // Recent activity
         db.get('SELECT MAX(received_at) as lastEvent FROM webhook_events', [], (err, row) => {
-            stats.lastEvent = row ? row.lastEvent : null;
+            if (err) {
+                console.error('Error getting last event:', err);
+                stats.lastEvent = null;
+            } else {
+                stats.lastEvent = row ? row.lastEvent : null;
+            }
+            checkComplete();
+        });
+    });
+});
+// ========== END FIXED STATISTICS ENDPOINT ==========
+
+// Debug endpoint to check direction values (helpful for troubleshooting)
+app.get('/debug/directions', (req, res) => {
+    db.all('SELECT direction, COUNT(*) as count FROM message_logs GROUP BY direction', [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        db.all('SELECT direction, COUNT(*) as count FROM webhook_events GROUP BY direction', [], (err, webhookRows) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
             
-            // Send response after all queries are done
-            setTimeout(() => {
-                res.json({
-                    success: true,
-                    timestamp: new Date().toISOString(),
-                    provider: "GMS (Global Message Services)",
-                    stats: stats
-                });
-            }, 100);
+            res.json({
+                success: true,
+                message_logs_directions: rows,
+                webhook_events_directions: webhookRows,
+                total_messages: rows.reduce((acc, row) => acc + row.count, 0),
+                total_events: webhookRows.reduce((acc, row) => acc + row.count, 0)
+            });
         });
     });
 });
@@ -868,6 +1012,7 @@ app.listen(PORT, () => {
     console.log(`   GET  http://localhost:${PORT}/callback-url - Get callback URL`);
     console.log(`   GET  http://localhost:${PORT}/test-webhook - Test page`);
     console.log(`   GET  http://localhost:${PORT}/health - Health check`);
+    console.log(`   GET  http://localhost:${PORT}/debug/directions - Debug direction values`);
     
     console.log('\nTo expose this to the internet (for GMS):');
     console.log('   npx ngrok http 3000');
