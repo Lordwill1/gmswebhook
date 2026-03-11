@@ -601,7 +601,7 @@ function detectDirection(event) {
             typeLower === 'incoming' ||
             typeLower === 'mo' ||  // Mobile Originated
             typeLower === 'mt_final' && event.status === 'Delivered' && event.direction !== 'outbound') {
-            return 'inbound';
+            return 'in';
         }
         
         // Outbound indicators
@@ -613,7 +613,7 @@ function detectDirection(event) {
             typeLower === 'dlr' ||  // Delivery Receipt
             typeLower === 'mt' ||   // Mobile Terminated
             typeLower === 'mt_final') {  // Final delivery status for outbound
-            return 'outbound';
+            return 'out';
         }
     }
     
@@ -624,7 +624,7 @@ function detectDirection(event) {
             // These statuses typically apply to outbound messages, but check context
             if (event.from && event.from.toString().length < 6) {
                 // If 'from' is a short code, it's likely outbound
-                return 'outbound';
+                return 'out';
             }
         }
     }
@@ -643,7 +643,7 @@ function detectDirection(event) {
     if (event.from) {
         const fromStr = event.from.toString();
         if (yourShortCodes.includes(fromStr) || yourLongNumbers.includes(fromStr)) {
-            return 'outbound'; // Message from your number/shortcode is outbound
+            return 'out'; // Message from your number/shortcode is outbound
         }
     }
     
