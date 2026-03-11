@@ -596,7 +596,7 @@ app.post('/webhook', (req, res) => {
     events.forEach(event => {
         // Extract fields based on Bandwidth's structure
         let eventType = event.type || 'unknown';
-        let messageId = event.message?.id || event.messageId || null;
+        let messageId = event.message?.id || event.messageId || event.id || null;
         let fromNumber = event.message?.from || event.from || null;
         
         // Handle 'to' field which could be array or string
@@ -655,21 +655,6 @@ app.post('/webhook', (req, res) => {
 });
 // ========== END FIXED WEBHOOK ENDPOINT ==========
 
-// Save outbound message when sending SMS
-function saveOutboundMessage(messageId, from, to, text) {
-    db.run(`
-        INSERT INTO message_logs
-        (message_id, from_number, to_number, message_content, direction, status)
-        VALUES (?, ?, ?, ?, 'outbound', 'sent')
-    `, [messageId, from, to, text], function(err) {
-        if (err) {
-            console.error('Error saving outbound message:', err);
-        } else {
-            console.log('Outbound message saved:', messageId);
-        }
-    });
-}
-
 // ========== UPDATED HELPER FUNCTION ==========
 // Helper function to update message logs
 function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
@@ -681,7 +666,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
         }
 
         // Extract message content
-        let messageContent = payload.message?.text || payload.text || payload.content || payload.messageText || payload.body || '';
+        let messageContent = payload.message?.text || payload.text || payload.content || payload.messageText || payload.body || payload.messageContent || '';
         
         // Handle empty text (like in your example)
         if (messageContent === '') {
