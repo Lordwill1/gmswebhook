@@ -611,19 +611,15 @@ app.post('/webhook', (req, res) => {
         let direction = event.message?.direction || event.direction || null;
         
         // Determine direction if not provided
-        if (!direction) {
-            // If from number is our own number, it's outbound
             if (!direction) {
-            if (event.type?.includes('inbound') || event.type === 'message-received') {
-                direction = 'inbound';
-            } else if (event.type?.includes('outbound') || event.type === 'message-sent' || event.type === 'message-delivered' || event.type === 'message-failed') {
-                direction = 'outbound';
-            } else {
-                direction = 'unknown'; // Don't guess
-            }
-        }
-        }
-
+    if (event.type?.includes('inbound') || event.type === 'message-received') {
+        direction = 'inbound';
+    } else if (event.type?.includes('outbound') || event.type === 'message-sent' || event.type === 'message-delivered' || event.type === 'message-failed') {
+        direction = 'outbound';
+    } else {
+        direction = 'unknown'; // Don't guess
+    }
+}
         console.log('Processed Event:', {
             eventType,
             messageId,
