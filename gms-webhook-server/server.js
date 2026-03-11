@@ -134,7 +134,7 @@ app.get('/', (req, res) => {
                     <a href="/stats" class="btn">Statistics</a>
                     <a href="/test-webhook" class="btn">Test Webhook</a>
                     <a href="/health" class="btn">Health Check</a>
-                    <a href="/debug-directions" class="btn">Debug</a>
+                    <a href="/debug-directions" <br> class="btn">Debug Directions</a>
                 </div>
 
                 <h2>Available Endpoints:</h2>
