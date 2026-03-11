@@ -613,7 +613,7 @@ app.post('/webhook', (req, res) => {
         // Determine direction if not provided
         if (!direction) {
             // If from number is our own number, it's outbound
-        if (!direction) {
+            if (!direction) {
             if (event.type?.includes('inbound') || event.type === 'message-received') {
                 direction = 'inbound';
             } else if (event.type?.includes('outbound') || event.type === 'message-sent' || event.type === 'message-delivered' || event.type === 'message-failed') {
@@ -811,15 +811,14 @@ app.get('/stats', (req, res) => {
                 SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END) as outboundMessages
             FROM message_logs
         `, [], (err, row) => {
-            res.json({
-                   success: true,
-                  timestamp: new Date().toISOString(),
-                  stats: {
-                    totalEvents: eventsRow?.total || 0,
-                       eventsByType: typeRows || [],
-                      messageStats: msgRow || {}
-                 }
-             });
+            stats.messageStats = row || {
+                totalMessages: 0,
+                deliveredMessages: 0,
+                failedMessages: 0,
+                pendingMessages: 0,
+                inboundMessages: 0,
+                outboundMessages: 0
+            };
         });
         
         // Recent activity
