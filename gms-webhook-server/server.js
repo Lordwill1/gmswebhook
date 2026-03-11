@@ -539,7 +539,7 @@ app.get('/test-webhook', (req, res) => {
                     
                     const payload = {
                         eventType: document.getElementById('eventType').value,
-                        messageId: "msg_" + Date.now(),
+                        messageId: document.getElementById('messageId').value,
                         from: document.getElementById('fromNumber').value,
                         to: document.getElementById('toNumber').value,
                         direction: document.getElementById('direction').value,
@@ -613,7 +613,15 @@ app.post('/webhook', (req, res) => {
         // Determine direction if not provided
         if (!direction) {
             // If from number is our own number, it's outbound
-            direction = event.direction || (event.type?.includes('inbound') ? 'inbound' : 'outbound');
+        if (!direction) {
+            if (event.type?.includes('inbound') || event.type === 'message-received') {
+                direction = 'inbound';
+            } else if (event.type?.includes('outbound') || event.type === 'message-sent' || event.type === 'message-delivered' || event.type === 'message-failed') {
+                direction = 'outbound';
+            } else {
+                direction = 'unknown'; // Don't guess
+            }
+        }
         }
 
         console.log('Processed Event:', {
@@ -803,14 +811,15 @@ app.get('/stats', (req, res) => {
                 SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END) as outboundMessages
             FROM message_logs
         `, [], (err, row) => {
-            stats.messageStats = row || {
-                totalMessages: 0,
-                deliveredMessages: 0,
-                failedMessages: 0,
-                pendingMessages: 0,
-                inboundMessages: 0,
-                outboundMessages: 0
-            };
+            res.json({
+                   success: true,
+                  timestamp: new Date().toISOString(),
+                  stats: {
+                    totalEvents: eventsRow?.total || 0,
+                       eventsByType: typeRows || [],
+                      messageStats: msgRow || {}
+                 }
+             });
         });
         
         // Recent activity
