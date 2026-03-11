@@ -134,7 +134,6 @@ app.get('/', (req, res) => {
                     <a href="/stats" class="btn">Statistics</a>
                     <a href="/test-webhook" class="btn">Test Webhook</a>
                     <a href="/health" class="btn">Health Check</a>
-                    <a href="/debug-directions" <br> class="btn">Debug Directions</a>
                 </div>
 
                 <h2>Available Endpoints:</h2>
@@ -150,7 +149,7 @@ app.get('/', (req, res) => {
                     <li><code>GET /callback-url</code> - Get callback URL in JSON format</li>
                     <li><code>GET /test-webhook</code> - Test page for sending sample webhooks</li>
                     <li><code>GET /health</code> - Health check endpoint</li>
-                    <li><code>GET /debug-directions</code> - Debug direction values</li>
+                    <li><code>GET <a href="/debug-directions"</a></code> - Debug direction values</li>
                 </ul>
 
                 <h2>GMS Webhook Formats Accepted:</h2>
