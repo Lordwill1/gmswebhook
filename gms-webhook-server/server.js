@@ -613,7 +613,7 @@ app.post('/webhook', (req, res) => {
         // Determine direction if not provided
         if (!direction) {
             // If from number is our own number, it's outbound
-            direction = (fromNumber === '+12135373887' ? 'outbound' : 'inbound');
+            direction = event.direction || (event.type?.includes('inbound') ? 'inbound' : 'outbound');
         }
 
         console.log('Processed Event:', {
@@ -655,6 +655,21 @@ app.post('/webhook', (req, res) => {
 });
 // ========== END FIXED WEBHOOK ENDPOINT ==========
 
+// Save outbound message when sending SMS
+function saveOutboundMessage(messageId, from, to, text) {
+    db.run(`
+        INSERT INTO message_logs
+        (message_id, from_number, to_number, message_content, direction, status)
+        VALUES (?, ?, ?, ?, 'outbound', 'sent')
+    `, [messageId, from, to, text], function(err) {
+        if (err) {
+            console.error('Error saving outbound message:', err);
+        } else {
+            console.log('Outbound message saved:', messageId);
+        }
+    });
+}
+
 // ========== UPDATED HELPER FUNCTION ==========
 // Helper function to update message logs
 function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction, status, payload) {
@@ -666,7 +681,7 @@ function updateMessageLog(messageId, eventType, fromNumber, toNumber, direction,
         }
 
         // Extract message content
-        let messageContent = payload.message?.text || payload.text || payload.content || '';
+        let messageContent = payload.message?.text || payload.text || payload.content || payload.messageText || payload.body || '';
         
         // Handle empty text (like in your example)
         if (messageContent === '') {
