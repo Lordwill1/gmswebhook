@@ -539,7 +539,7 @@ app.get('/test-webhook', (req, res) => {
                     
                     const payload = {
                         eventType: document.getElementById('eventType').value,
-                        messageId: document.getElementById('messageId').value,
+                        messageId: "msg_" + Date.now(),
                         from: document.getElementById('fromNumber').value,
                         to: document.getElementById('toNumber').value,
                         direction: document.getElementById('direction').value,
