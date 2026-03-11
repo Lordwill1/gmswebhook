@@ -150,7 +150,7 @@ app.get('/', (req, res) => {
                     <li><code>GET /test-webhook</code> - Test page for sending sample webhooks</li>
                     <li><code>GET /health</code> - Health check endpoint</li>
                     <li><code>GET /debug-directions</code> - Debug direction values</li>
-                    <li><a href="/debug/directions" class="debug-btn"><code>GET /debug-directions</code> - Debug direction values</a></li>
+                    <li><code>GET /debug-directions</code> <a href="/debug/directions" class="debug-btn"> - Debug direction values</a></li>
                 </ul>
 
                 <h2>GMS Webhook Formats Accepted:</h2>
