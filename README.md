@@ -11,7 +11,7 @@ This server acts as a "mailbox" for our Bandwidth phone number **+1 (213) 537---
 
 - **Incoming SMS** - When someone texts our number
 - **Outgoing SMS** - When we send messages out
-- **Delivery Status** - Whether messages were delivered, failed, etc.
+- **Delivery Status** - Whether messages were delivered, failed, etc..
 - **Message Content** - The actual text being sent/received
 <img width="924" height="614" alt="image" src="https://github.com/user-attachments/assets/e923aedf-b3d7-43e0-af28-8f8a116b69cc" />
 
