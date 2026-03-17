@@ -5,7 +5,7 @@ A robust webhook server for handling Bandwidth messaging events with real-time p
 
 ## What This Does
 
-This server acts as a "mailbox" for our Bandwidth phone number **+1 (213) 537-----**. When someone sends an SMS to this number, or when we send messages out, Bandwidth forwards all the activity here.
+This server acts as a "mailbox" for our Bandwidth phone number **+1 (213) 537------**. When someone sends an SMS to this number, or when we send messages out, Bandwidth forwards all the activity here.
 
 ## What Gets Tracked
 
