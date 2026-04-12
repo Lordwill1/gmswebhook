@@ -1,7 +1,8 @@
 # Webhook Server
 
 A robust webhook server for handling Bandwidth messaging events with real-time processing, database storage, and comprehensive monitoring capabilities. Perfect for integrating Bandwidth's SMS/MMS services with your applications.
-<img width="804" height="629" alt="image" src="<img width="807" height="565" alt="image" src="https://github.com/user-attachments/assets/4dec66b3-9481-41f2-9680-067d2118d412" />
+<img width="804" height="629" alt="image" src="<img width="807" height="565" alt="image" src="<img width="826" height="579" alt="image" src="https://github.com/user-attachments/assets/5a3998dc-bacb-493a-8112-97b0c9aeeb80" />
+" />
 " />
 
 ## What This Does
